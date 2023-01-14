@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,25 +11,57 @@ public class GameManager : MonoBehaviour
     public int stageIndex;
     public int health;
     public PlayerMove player;
+    public GameObject[] stages;
 
+    public Image[] UIhealth;
+    public Text UIPoint;
+    public Text UIStage;
+    public GameObject UIRestartBtn;
+
+void Update(){
+    UIPoint.text = (totalPoint + stagePoint).ToString();
+}
     public void NextStage()
     {
-        stageIndex++;
-        totalPoint += stagePoint;
-        stagePoint = 0;
+        //Change stage
+        if(stageIndex < stages.Length - 1){
+            stages[stageIndex].SetActive(false);
+            stageIndex++;
+            stages[stageIndex].SetActive(true);
+            PlayerReposition();
+
+            UIStage.text = "STAGE " + (stageIndex + 1);
+        }
+        else{ //Game Clear
+            //Player Control Lock
+            Time.timeScale = 0;
+            //Result UI
+            Debug.Log("ê²Œìž„ í´ë¦¬ì–´!");
+            //Restart Button UI
+            UIRestartBtn.SetActive(true);
+            Text btnText = UIRestartBtn.GetComponentInChildren<Text>();
+            btnText.text = "Clear!";
+            UIRestartBtn.SetActive(true);
+        }
+            //Calulate Point
+            totalPoint += stagePoint;
+            stagePoint = 0;
     }
 
     public void HealthDown()
     {
-        if (health > 1)
+        if (health > 1){
             health--;
+            UIhealth[health].color = new Color(1, 0, 0, 0.4f);
+        }
         else
         {
+            //All Health UI Off
+            UIhealth[0].color = new Color(1, 0, 0, 0.4f);
             //Player Die Effect
             player.OnDie();
-            //Result UI
-            Debug.Log("Á×¾ú½À´Ï´Ù!");
             //Retry Button UI
+            UIRestartBtn.SetActive(true);
         }
     }
     void OnTriggerEnter2D(Collider2D collision)
@@ -36,12 +70,20 @@ public class GameManager : MonoBehaviour
             //Player Reposition
             if (health > 1)
             {
-                collision.attachedRigidbody.velocity = Vector2.zero;
-                collision.transform.position = new Vector3(0, 0, -1);
+                PlayerReposition();
             }
 
             //Health Down
             HealthDown();
         }
+    }
+
+    void PlayerReposition(){
+        player.transform.position = new Vector3(0, 0, -1);
+        player.VelocityZero();
+    }
+    public void Restart(){
+        Time.timeScale = 1;
+        SceneManager.LoadScene(0);
     }
 }
